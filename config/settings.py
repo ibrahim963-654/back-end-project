@@ -40,7 +40,7 @@ SECRET_KEY = "django-project-secret-key-2026-long-random-string"
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # ==========================
