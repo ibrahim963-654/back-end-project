@@ -253,6 +253,10 @@ CELERY_TASK_SERIALIZER = "json"
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://gregarious-benevolence-production-bb1d.up.railway.app",
+]
+
 
 # ==========================
 # PRODUCTION SECURITY & STATIC SETTINGS
