@@ -1,3 +1,4 @@
+import uuid
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 
@@ -14,7 +15,7 @@ from core.models import (
     Reward,
     CompanySetting,
     ActivityLog,
-    Company, # تأكد من استيراد موديل Company هنا
+    Company,
 )
 
 User = get_user_model()
@@ -96,9 +97,9 @@ class UserSerializer(serializers.ModelSerializer):
             "role",
 
             "company",             
-            "company_name",          # ✅ مضاف حديثاً للاستقبال من الفرونت
+            "company_name",          # ✅ مضاف للاستقبال من الفرونت
             "branch",
-            "branch_name",           # ✅ مضاف حديثاً للاستقبال من الفرونت
+            "branch_name",           # ✅ مضاف للاستقبال من الفرونت
             "branch_name_display",   # اسم الفرع للعرض (read)
 
             "managed_branches",
@@ -177,7 +178,7 @@ class UserSerializer(serializers.ModelSerializer):
             if not request.user.is_superuser and hasattr(request.user, "company") and request.user.company:
                 validated_data["company"] = request.user.company
 
-        # 2. تحديد أو إنشاء الفرع وربطه بالشركة مع توليد كود فريد لمنع التكرار
+        # 2. تحديد أو إنشاء الفرع وربطه بالشركة مع توليد كود فريد لمنع التكرار نهائياً
         if branch_name_input and branch_name_input.strip():
             target_company = validated_data.get("company")
             if target_company:
@@ -201,7 +202,7 @@ class UserSerializer(serializers.ModelSerializer):
                 update_fields=["password"]
             )
 
-        # ✅ الحقول الـ M2M بتتظبط بعد إنشاء اليوزر مش وقت الإنشاء
+        # ✅ الحقول الـ M2M بتتظبط بعد إنشاء اليوزر
         if managed_branches:
             user.managed_branches.set(managed_branches)
 
@@ -234,9 +235,9 @@ class UserSerializer(serializers.ModelSerializer):
             validated_data["company"] = company_obj
         elif request and hasattr(request, "user") and request.user.is_authenticated:
             if not request.user.is_superuser:
-                validated_data.pop("company", None) # نحافظ على شركة الموظف الأصلية
+                validated_data.pop("company", None)
 
-        # معالجة تعديل الفرع مع توليد كود فريد لو الفرع الجديد مش موجود
+        # معالجة تعديل الفرع مع توليد كود فريد لمنع التكرار
         if branch_name_input and branch_name_input.strip():
             current_company = validated_data.get("company", instance.company)
             if current_company:
@@ -270,6 +271,8 @@ class UserSerializer(serializers.ModelSerializer):
             instance.user_permissions.set(user_permissions)
 
         return instance
+
+
 # =========================================================
 # EVALUATION SERIALIZER
 # =========================================================
