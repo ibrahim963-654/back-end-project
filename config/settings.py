@@ -5,6 +5,7 @@ from datetime import timedelta
 import os                           
 from celery.schedules import crontab
 from decouple import config
+import dj_database_url
 
 
 CELERY_BEAT_SCHEDULE = {
@@ -114,18 +115,14 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ==========================
 
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME'),
-        'USER': config('DB_USER'),
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': config('DB_HOST'),
-        'PORT': config('DB_PORT'),
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        ssl_require=True
+    )
 }
-
-
 # ==========================
 # CUSTOM USER MODEL
 # ==========================
