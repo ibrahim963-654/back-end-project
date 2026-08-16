@@ -177,13 +177,15 @@ class UserSerializer(serializers.ModelSerializer):
             if not request.user.is_superuser and hasattr(request.user, "company") and request.user.company:
                 validated_data["company"] = request.user.company
 
-        # 2. تحديد أو إنشاء الفرع وربطه بالشركة
+        # 2. تحديد أو إنشاء الفرع وربطه بالشركة مع توليد كود فريد لمنع التكرار
         if branch_name_input and branch_name_input.strip():
             target_company = validated_data.get("company")
             if target_company:
+                branch_code = f"BR-{uuid.uuid4().hex[:6].upper()}"
                 branch_obj, _ = Branch.objects.get_or_create(
                     name=branch_name_input.strip(), 
-                    company=target_company
+                    company=target_company,
+                    defaults={'code': branch_code}
                 )
                 validated_data["branch"] = branch_obj
 
@@ -234,13 +236,15 @@ class UserSerializer(serializers.ModelSerializer):
             if not request.user.is_superuser:
                 validated_data.pop("company", None) # نحافظ على شركة الموظف الأصلية
 
-        # معالجة تعديل الفرع
+        # معالجة تعديل الفرع مع توليد كود فريد لو الفرع الجديد مش موجود
         if branch_name_input and branch_name_input.strip():
             current_company = validated_data.get("company", instance.company)
             if current_company:
+                branch_code = f"BR-{uuid.uuid4().hex[:6].upper()}"
                 branch_obj, _ = Branch.objects.get_or_create(
                     name=branch_name_input.strip(), 
-                    company=current_company
+                    company=current_company,
+                    defaults={'code': branch_code}
                 )
                 validated_data["branch"] = branch_obj
 
