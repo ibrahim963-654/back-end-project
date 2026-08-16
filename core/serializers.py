@@ -51,10 +51,6 @@ class BranchSerializer(serializers.ModelSerializer):
     def get_employee_count(self, obj):
         return obj.employees.count()
 
-
-# =========================================================
-# USER SERIALIZER (Updated with company_name & branch_name support)
-# =========================================================
 class UserSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
@@ -63,11 +59,9 @@ class UserSerializer(serializers.ModelSerializer):
         allow_blank=False,
     )
 
-    # حقول إضافية لاستقبال أسماء الشركة والفرع النصية المرسلة من الواجهة الأمامية
     company_name = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
     branch_name = serializers.CharField(write_only=True, required=False, allow_blank=True, allow_null=True)
 
-    # اسم الفرع للعرض بس (read-only) - بيرجع اسم الفرع كـ String وليس الـ ID
     branch_name_display = serializers.CharField(
         source="branch.name",
         read_only=True,
@@ -75,8 +69,6 @@ class UserSerializer(serializers.ModelSerializer):
     )
 
     managed_branch_names = serializers.SerializerMethodField()
-
-    # الصلاحيات الخاصة بالمستخدم
     permissions = serializers.SerializerMethodField()
 
     class Meta:
@@ -87,40 +79,29 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "password",
-
             "first_name",
             "last_name",
-
             "employee_code",
             "phone",
-
             "role",
-
             "company",             
-            "company_name",          # ✅ مضاف للاستقبال من الفرونت
+            "company_name",          
             "branch",
-            "branch_name",           # ✅ مضاف للاستقبال من الفرونت
-            "branch_name_display",   # اسم الفرع للعرض (read)
-
+            "branch_name",           
+            "branch_name_display",   
             "managed_branches",
             "managed_branch_names",
-
             "groups",
             "user_permissions",
             "permissions",
-
             "is_active",
             "is_staff",
             "is_superuser",
-
             "points",
-
             "profile_pic",
             "dark_mode",
-
             "last_login",
             "last_login_ip",
-
             "created_at",
             "updated_at",
         ]
@@ -150,27 +131,21 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
     def get_permissions(self, obj):
-        """
-        إرجاع كل الصلاحيات الفعلية للمستخدم.
-        """
         permissions = obj.get_all_permissions()
         return sorted(list(permissions))
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
         
-        # استخراج أسماء الشركة والفرع المرسلة نصياً من الواجهة الأمامية
         company_name_input = validated_data.pop("company_name", None)
         branch_name_input = validated_data.pop("branch_name", None)
 
-        # ✅ الحقول دي Many-to-Many، لازم تتشال قبل الإنشاء
         managed_branches = validated_data.pop("managed_branches", None)
         groups = validated_data.pop("groups", None)
         user_permissions = validated_data.pop("user_permissions", None)
 
         request = self.context.get("request")
         
-        # 1. تحديد الشركة (إما بالاسم المدخل أو من المدير المسجل)
         if company_name_input and company_name_input.strip():
             company_obj, _ = Company.objects.get_or_create(name=company_name_input.strip())
             validated_data["company"] = company_obj
@@ -178,32 +153,25 @@ class UserSerializer(serializers.ModelSerializer):
             if not request.user.is_superuser and hasattr(request.user, "company") and request.user.company:
                 validated_data["company"] = request.user.company
 
-        # 2. تحديد أو إنشاء الفرع وربطه بالشركة مع توليد كود فريد لمنع التكرار نهائياً
-       if branch_name_input and branch_name_input.strip():
+        if branch_name_input and branch_name_input.strip():
             target_company = validated_data.get("company")
             if target_company:
-                # توليد كود فريد وضامن عدم تكراره لكل فرع جديد
                 branch_code = f"BR-{uuid.uuid4().hex[:6].upper()}"
-                
                 branch_obj, _ = Branch.objects.get_or_create(
                     name=branch_name_input.strip(), 
                     company=target_company,
                     defaults={'code': branch_code}
                 )
                 validated_data["branch"] = branch_obj
+
         validated_data['is_active'] = True
 
-        user = User.objects.create(
-            **validated_data
-        )
+        user = User.objects.create(**validated_data)
 
         if password:
             user.set_password(password)
-            user.save(
-                update_fields=["password"]
-            )
+            user.save(update_fields=["password"])
 
-        # ✅ الحقول الـ M2M بتتظبط بعد إنشاء اليوزر
         if managed_branches:
             user.managed_branches.set(managed_branches)
 
@@ -216,10 +184,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        password = validated_data.pop(
-            "password",
-            None
-        )
+        password = validated_data.pop("password", None)
 
         company_name_input = validated_data.pop("company_name", None)
         branch_name_input = validated_data.pop("branch_name", None)
@@ -230,7 +195,6 @@ class UserSerializer(serializers.ModelSerializer):
 
         request = self.context.get("request")
         
-        # معالجة تعديل الشركة
         if company_name_input and company_name_input.strip():
             company_obj, _ = Company.objects.get_or_create(name=company_name_input.strip())
             validated_data["company"] = company_obj
@@ -238,7 +202,6 @@ class UserSerializer(serializers.ModelSerializer):
             if not request.user.is_superuser:
                 validated_data.pop("company", None)
 
-        # معالجة تعديل الفرع مع توليد كود فريد لمنع التكرار
         if branch_name_input and branch_name_input.strip():
             current_company = validated_data.get("company", instance.company)
             if current_company:
@@ -251,11 +214,7 @@ class UserSerializer(serializers.ModelSerializer):
                 validated_data["branch"] = branch_obj
 
         for attr, value in validated_data.items():
-            setattr(
-                instance,
-                attr,
-                value
-            )
+            setattr(instance, attr, value)
 
         if password:
             instance.set_password(password)
@@ -272,7 +231,6 @@ class UserSerializer(serializers.ModelSerializer):
             instance.user_permissions.set(user_permissions)
 
         return instance
-
 
 # =========================================================
 # EVALUATION SERIALIZER
