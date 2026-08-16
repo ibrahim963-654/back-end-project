@@ -179,17 +179,18 @@ class UserSerializer(serializers.ModelSerializer):
                 validated_data["company"] = request.user.company
 
         # 2. تحديد أو إنشاء الفرع وربطه بالشركة مع توليد كود فريد لمنع التكرار نهائياً
-        if branch_name_input and branch_name_input.strip():
+       if branch_name_input and branch_name_input.strip():
             target_company = validated_data.get("company")
             if target_company:
+                # توليد كود فريد وضامن عدم تكراره لكل فرع جديد
                 branch_code = f"BR-{uuid.uuid4().hex[:6].upper()}"
+                
                 branch_obj, _ = Branch.objects.get_or_create(
                     name=branch_name_input.strip(), 
                     company=target_company,
                     defaults={'code': branch_code}
                 )
                 validated_data["branch"] = branch_obj
-
         validated_data['is_active'] = True
 
         user = User.objects.create(
