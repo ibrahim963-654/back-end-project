@@ -562,36 +562,33 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
    def perform_create(self, serializer):
-        try:
-            request_data = self.request.data
-            company_name = request_data.get('company_name')
-            branch_name = request_data.get('branch_name')
+        request_data = self.request.data
+        company_name = request_data.get('company_name')
+        branch_name = request_data.get('branch_name')
 
-            company = None
-            branch = None
+        company = None
+        branch = None
 
-            if company_name:
-                company, _ = Company.objects.get_or_create(name=company_name.strip())
+        if company_name and isinstance(company_name, str) and company_name.strip():
+            company, _ = Company.objects.get_or_create(name=company_name.strip())
 
-            if branch_name and company:
-                branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
+        if branch_name and company and isinstance(branch_name, str) and branch_name.strip():
+            branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
 
-            create_kwargs = {}
-            if company_name:
-                create_kwargs['company'] = company
-            if branch_name:
-                create_kwargs['branch'] = branch
+        # الحفظ الآمن بدون تمرير حقول فارغة تسبب انهيار السيرفر
+        save_kwargs = {}
+        if company:
+            save_kwargs['company'] = company
+        if branch:
+            save_kwargs['branch'] = branch
 
-            employee = serializer.save(**create_kwargs)
-            display_name = employee.first_name if employee.first_name else employee.username
+        employee = serializer.save(**save_kwargs)
+        display_name = employee.first_name if employee.first_name else employee.username
 
-            create_activity_log(
-                self.request,
-                f"إضافة مستخدم: {display_name}"
-            )
-        except Exception as e:
-            print(f"CRITICAL ERROR IN CREATE: {str(e)}")
-            raise e
+        create_activity_log(
+            self.request,
+            f"إضافة مستخدم: {display_name}"
+        )
 
     def perform_update(self, serializer):
         request_data = self.request.data
@@ -601,19 +598,19 @@ class UserViewSet(viewsets.ModelViewSet):
         company = None
         branch = None
 
-        if company_name:
+        if company_name and isinstance(company_name, str) and company_name.strip():
             company, _ = Company.objects.get_or_create(name=company_name.strip())
 
-        if branch_name and company:
+        if branch_name and company and isinstance(branch_name, str) and branch_name.strip():
             branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
 
-        update_kwargs = {}
-        if company_name is not None:
-            update_kwargs['company'] = company
-        if branch_name is not None:
-            update_kwargs['branch'] = branch
+        save_kwargs = {}
+        if company_name is not None and company:
+            save_kwargs['company'] = company
+        if branch_name is not None and branch:
+            save_kwargs['branch'] = branch
 
-        employee = serializer.save(**update_kwargs)
+        employee = serializer.save(**save_kwargs)
 
         create_activity_log(
             self.request,
