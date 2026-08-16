@@ -520,6 +520,9 @@ class BranchViewSet(viewsets.ModelViewSet):
 # =========================================================
 # USERS
 # =========================================================
+# =========================================================
+# USERS
+# =========================================================
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
@@ -561,7 +564,7 @@ class UserViewSet(viewsets.ModelViewSet):
             id=user.id
         )
 
-   def perform_create(self, serializer):
+    def perform_create(self, serializer):
         request_data = self.request.data
         company_name = request_data.get('company_name')
         branch_name = request_data.get('branch_name')
@@ -575,7 +578,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if branch_name and company and isinstance(branch_name, str) and branch_name.strip():
             branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
 
-        # الحفظ الآمن بدون تمرير حقول فارغة تسبب انهيار السيرفر
         save_kwargs = {}
         if company:
             save_kwargs['company'] = company
