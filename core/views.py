@@ -517,7 +517,6 @@ class BranchViewSet(viewsets.ModelViewSet):
             f"حذف الفرع: {name}"
         )
 
-
 # =========================================================
 # USERS
 # =========================================================
@@ -563,7 +562,26 @@ class UserViewSet(viewsets.ModelViewSet):
         )
 
     def perform_create(self, serializer):
-        employee = serializer.save()
+        request_data = self.request.data
+        company_name = request_data.get('company_name')
+        branch_name = request_data.get('branch_name')
+
+        company = None
+        branch = None
+
+        if company_name:
+            company, _ = Company.objects.get_or_create(name=company_name.strip())
+
+        if branch_name and company:
+            branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
+
+        create_kwargs = {}
+        if company_name:
+            create_kwargs['company'] = company
+        if branch_name:
+            create_kwargs['branch'] = branch
+
+        employee = serializer.save(**create_kwargs)
         display_name = employee.first_name if employee.first_name else employee.username
 
         create_activity_log(
@@ -585,7 +603,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if branch_name and company:
             branch, _ = Branch.objects.get_or_create(name=branch_name.strip(), company=company)
 
-        # تحديث بيانات الموظف مع تحديث الشركة والفرع إن وجدتا
         update_kwargs = {}
         if company_name is not None:
             update_kwargs['company'] = company
