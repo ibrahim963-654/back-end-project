@@ -54,7 +54,6 @@ class BranchSerializer(serializers.ModelSerializer):
 # =========================================================
 # USER SERIALIZER (Updated with company_name & branch_name support)
 # =========================================================
-
 class UserSerializer(serializers.ModelSerializer):
 
     password = serializers.CharField(
@@ -96,10 +95,10 @@ class UserSerializer(serializers.ModelSerializer):
 
             "role",
 
-            "company",              
-            "company_name",         # ✅ مضاف حديثاً للاستقبال من الفرونت
+            "company",             
+            "company_name",          # ✅ مضاف حديثاً للاستقبال من الفرونت
             "branch",
-            "branch_name",          # ✅ مضاف حديثاً للاستقبال من الفرونت
+            "branch_name",           # ✅ مضاف حديثاً للاستقبال من الفرونت
             "branch_name_display",   # اسم الفرع للعرض (read)
 
             "managed_branches",
@@ -267,8 +266,6 @@ class UserSerializer(serializers.ModelSerializer):
             instance.user_permissions.set(user_permissions)
 
         return instance
-
-
 # =========================================================
 # EVALUATION SERIALIZER
 # =========================================================
