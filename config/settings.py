@@ -255,3 +255,18 @@ CELERY_TASK_SERIALIZER = "json"
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
 DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
+
+
+# ==========================
+# PRODUCTION SECURITY & STATIC SETTINGS
+# ==========================
+
+# السماح لكل النطاقات مؤقتاً أو تركها كما هي حسب الرغبة
+ALLOWED_HOSTS = ['*']
+
+# تفعيل الـ Static Root لجمع ملفات الـ Admin والـ CSS
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# إضافة WhiteNoise لخدمة الملفات الثابتة بكفاءة عالية على السيرفر (اختياري ولكن يُنصح به جداً)
+# يمكنك التأكد من إضافته لملف requirements.txt لو أردت
