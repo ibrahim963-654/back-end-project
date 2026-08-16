@@ -71,7 +71,7 @@ INSTALLED_APPS = [
 # ==========================
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # لازم تكون في الصدارة تماماً
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -115,7 +115,6 @@ WSGI_APPLICATION = "config.wsgi.application"
 # DATABASE
 # ==========================
 
-
 DATABASES = {
     'default': dj_database_url.config(
         default=config('DATABASE_URL'),
@@ -123,6 +122,7 @@ DATABASES = {
         ssl_require=True
     )
 }
+
 # ==========================
 # CUSTOM USER MODEL
 # ==========================
@@ -181,15 +181,32 @@ SIMPLE_JWT = {
 
 
 # ==========================
-# CORS
+# CORS SETTINGS (تم التعديل للحل النهائي)
 # ==========================
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
+CORS_ALLOW_ALL_ORIGINS = True  # السماح لأي مصدر بالاتصال لمنع مشاكل الـ CORS نهائياً
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_METHODS = [
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 
 # ==========================
@@ -247,7 +264,7 @@ CELERY_TASK_SERIALIZER = "json"
 
 
 # ==========================
-# FILE UPLOAD
+# FILE UPLOAD & TRUSTED ORIGINS
 # ==========================
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880
@@ -255,19 +272,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 5242880
 
 CSRF_TRUSTED_ORIGINS = [
     "https://gregarious-benevolence-production-bb1d.up.railway.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
-
-
-# ==========================
-# PRODUCTION SECURITY & STATIC SETTINGS
-# ==========================
-
-# السماح لكل النطاقات مؤقتاً أو تركها كما هي حسب الرغبة
-ALLOWED_HOSTS = ['*']
-
-# تفعيل الـ Static Root لجمع ملفات الـ Admin والـ CSS
-STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-# إضافة WhiteNoise لخدمة الملفات الثابتة بكفاءة عالية على السيرفر (اختياري ولكن يُنصح به جداً)
-# يمكنك التأكد من إضافته لملف requirements.txt لو أردت
