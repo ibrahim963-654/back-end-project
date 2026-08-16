@@ -26,6 +26,7 @@ from core.models import (
     Product,
     Notification,
     Attendance,
+    Company,
     Message,
     Backup,
     WeeklyRanking,
