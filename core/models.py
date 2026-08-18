@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+import uuid
 
 
 # =========================================================
@@ -56,7 +57,9 @@ class Branch(models.Model):
 
     code = models.CharField(
         "كود الفرع",
-        max_length=20
+        max_length=50,
+        null=True,
+        blank=True
     )
 
     name = models.CharField(
@@ -100,6 +103,12 @@ class Branch(models.Model):
                 name="unique_branch_name_per_company"
             ),
         ]
+
+    def save(self, *args, **kwargs):
+        # لو كود الفرع غير موجود أو فارغ، نقوم بتوليد كود فريد تلقائياً لتجنب مشكلة التكرار
+        if not self.code or self.code.strip() == "":
+            self.code = f"BR-{uuid.uuid4().hex[:6].upper()}"
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name}"
